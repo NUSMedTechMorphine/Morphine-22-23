@@ -20,9 +20,12 @@ void setup(){
   WiFi.mode(WIFI_STA);
   
   // Add list of wifi networks
-  wifiMulti.addAP("Lakshmi's Galaxy S21", "wbmt3054");
-  wifiMulti.addAP("Syarwina's iPhone", "nowifiagain");
-  wifiMulti.addAP("kai Jun's phone", "12345678");
+  wifiMulti.addAP("Lakshmi's Galaxy S21", "wbmt3054"); //Lakshmi's hotspot
+  wifiMulti.addAP("Syarwina's iPhone", "nowifiagain"); //Syarwina's hotspot
+  wifiMulti.addAP("kai Jun's phone", "12345678"); //Zhe Li's hotspot
+  wifiMulti.addAP("Iphone (2)", "12345678"); //
+  wifiMulti.addAP("Rigel wifi", "12345678"); //
+ 
 
   // WiFi.scanNetworks will return the number of networks found
   int n = WiFi.scanNetworks();
