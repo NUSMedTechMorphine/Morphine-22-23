@@ -3,7 +3,7 @@
  *  WiFi > WiFiMulti: https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiMulti/WiFiMulti.ino
  *  WiFi > WiFiScan: https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiScan/WiFiScan.ino
  *  Complete project details at our blog: https://RandomNerdTutorials.com/
- *  
+ *  website used as reference: https://randomnerdtutorials.com/esp32-wifimulti/
  */
 
 #include <WiFi.h>
