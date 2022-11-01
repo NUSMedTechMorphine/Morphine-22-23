@@ -40,12 +40,18 @@ int count = 0;
 bool signupOK = false;
 const char* ssid = "Iphone (2)";
 const char* password =  "12345678";
+int LoopCodeStartTime = 0;
+int StartUpload = 0;
+int EndUpload = 0;
+int LoopCodeEndTime = 0;
+float UploadSpeed = 0;
+float LoopSpeed = 0;
 
 
 
 //--------------------Initialising Components--------------------
 Adafruit_MPU6050 mpu; 
-Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &Wire); 
+Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire); 
 
 
  
@@ -114,6 +120,7 @@ void setup() {
 
  
 void loop() {
+  LoopCodeStartTime = millis();
 
   // Everything here is for MPU readings
   sensors_event_t a, g, temp;
@@ -188,20 +195,41 @@ void loop() {
     gYArr.add(g.gyro.y);
     gZArr.add(g.gyro.z);
     tempArr.add(temp.temperature);
-    
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/aXarr", &aXArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/aYArr", &aYArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/aZArr", &aZArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/gXArr", &gXArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/gYArr", &gYArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/gZArr", &gZArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/test/tempArr", &tempArr) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set count... %s\n", Firebase.RTDB.setInt(&fbdo, "/test/Accounter", count) ? "ok" : fbdo.errorReason().c_str());
+
+    StartUpload = millis();
+    Serial.printf("Set aXArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/aXarr", &aXArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set aYArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/aYArr", &aYArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set aZArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/aZArr", &aZArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set gXArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/gXArr", &gXArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set gYArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/gYArr", &gYArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set gZArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/gZArr", &gZArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set tempArr array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/tempArr", &tempArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set Accounter... %s\n", Firebase.RTDB.setInt(&fbdo, "/Test 1/Accounter", count) ? "ok" : fbdo.errorReason().c_str());
+    EndUpload = millis();
     count++;
-    
- 
-  delay(500); //the sensor gets value faster than data could be uploaded
-
-
+    Serial.print("Accounter: ");
+    Serial.println(count);
   }   
+
+  //-----------For testing speed (remove in final code)-----------
+  float UploadSpeed = EndUpload - StartUpload;
+  Serial.print("DataBase Upload Speed: ");
+  Serial.println(UploadSpeed);
+  
+  LoopCodeEndTime = millis();
+  float LoopSpeed = LoopCodeEndTime - LoopCodeStartTime;
+  Serial.print("Loop Code Speed: ");
+  Serial.println(LoopSpeed);
+
+  FirebaseJsonArray UploadSpeedArr;
+  FirebaseJsonArray LoopSpeedArr;
+
+  UploadSpeedArr.add(UploadSpeed);
+  LoopSpeedArr.add(LoopSpeed);
+  Serial.printf("Set UploadSpeed array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/UploadSpeedArr", &UploadSpeedArr) ? "ok" : fbdo.errorReason().c_str());
+  Serial.printf("Set LoopSpeed array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 1/LoopSpeedArr", &LoopSpeedArr) ? "ok" : fbdo.errorReason().c_str());
+  //-----------For testing speed (remove in final code)-----------
+  
+  
+  
 }
