@@ -49,6 +49,7 @@ float EndUpload = 0;
 float UploadSpeed = 0;
 float LoopSpeed = 0;
 const uint32_t connectTimeoutMs = 10000; // WiFi connect timeout per AP. Increase when connecting takes longer.
+String StringValue = "";
 
 
 //--------------------Initialising Components--------------------
@@ -157,19 +158,14 @@ void loop() {
   if (wifiMulti.run() != WL_CONNECTED) {
     Serial.print("WiFi not connected: ");
 
+  }
 
-  }
-  else {
-    Serial.println("WiFi connected!");
-    Serial.print(WiFi.SSID());
-    Serial.print(" ");
-    Serial.println(WiFi.RSSI());
-  }
 
 
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 0.0001 || sendDataPrevMillis == 0)){
     sendDataPrevMillis = millis();
 
+    Serial.println("--------------------");
     Serial.println("Sending data to cloud......");
     //append data to string format
     int i = 0;
@@ -221,8 +217,8 @@ void loop() {
     DatapointsArr.add(datapoints);
     
     StartUpload = millis();
-    Serial.printf("Set Array... %s\n", Firebase.RTDB.setInt(&fbdo, "/Test 2/Accounter", count) ? "ok" : fbdo.errorReason().c_str());
-    Serial.printf("Set count... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 2/datapoints", &DatapointsArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Uploading Accounter Value... %s\n", Firebase.RTDB.setInt(&fbdo, "/Test 2/Accounter", count) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Uploading Data Array ... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 2/datapoints", &DatapointsArr) ? "ok" : fbdo.errorReason().c_str());
     EndUpload = millis();
     
     count++;
@@ -247,11 +243,20 @@ void loop() {
 
   UploadSpeedArr.add(UploadSpeed);
   LoopSpeedArr.add(LoopSpeed);
-  Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 2/UploadSpeedArr", &UploadSpeedArr) ? "ok" : fbdo.errorReason().c_str());
-  Serial.printf("Set array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 2/LoopSpeedArr", &LoopSpeedArr) ? "ok" : fbdo.errorReason().c_str());
+  Serial.printf("Set Upload Speed array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 2/UploadSpeedArr", &UploadSpeedArr) ? "ok" : fbdo.errorReason().c_str());
+  Serial.printf("Set Loop Speed array... %s\n", Firebase.RTDB.setArray(&fbdo, "/Test 2/LoopSpeedArr", &LoopSpeedArr) ? "ok" : fbdo.errorReason().c_str());
+ 
   Serial.println("");
   //-----------For testing speed (remove in final code)-----------
   
-  
-  
+  if (Firebase.RTDB.getString(&fbdo, "/esp_msg/Code")) {
+    Serial.println("Extracting data from cloud...");
+    //if (fbdo.dataType() == "String") {
+    StringValue = fbdo.stringData();
+    Serial.println("Cloud String: "+ StringValue);
+    Serial.println("--------------------");
+    Serial.println("");
+
+  }
+
 }
