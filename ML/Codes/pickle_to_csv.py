@@ -114,7 +114,7 @@ def process_split_ciruit_data(split_circuit_data):
 
 def process_file(filename):
     """ Converts target file from pickle to csv """
-    filename = f"../Datasets/raw/{filename}.pkl"
+    filename = f"../Datasets/raw/fall/{filename}.pkl"
 
     full_gps_df = pd.DataFrame(columns = ['accounter', 'latitude', 'longitude', 'altitude', 'satelliteInView', 'timingForThisSet', 'LoopSpeed', 'UploadSpeed'])
     full_mpu6050_df = pd.DataFrame(columns = ['accounter', 'LoopSpeedArr', 'UploadSpeedArr', 'set_index', 'Ax', 'Ay', 'Az', 'gx', 'gy', 'gz', 'temp', 'timingForThisSet', 'timeDifference'])
@@ -132,7 +132,7 @@ def process_file(filename):
     return full_gps_df, full_mpu6050_df
 
 def save_processed_file(processed_df, filename_to_save, kind):
-    final_dir = f"../Datasets/curated/{kind}_{filename_to_save}.csv"
+    final_dir = f"../Datasets/curated/fall/{kind}_{filename_to_save}.csv"
     processed_df.to_csv(final_dir, index=False)
     print("File saved at:", final_dir)
 
