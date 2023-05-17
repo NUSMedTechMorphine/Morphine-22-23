@@ -11,35 +11,41 @@ from sklearn import preprocessing
 import random
 
 # Instantiating VAE model
-latent_space_dim = 2
-def sampling(args):
-    z_mean, z_log_sigma = args
-    epsilon = K.random_normal(shape=(latent_space_dim,), mean=0., stddev=1.)
-    return_value = z_mean + K.exp(z_log_sigma) * epsilon
-    #print(z_mean)
-    return return_value
 
-inputs = Input((6,))
-layer1 = Dense(6, activation = 'relu')(inputs)
-layer2 = Dense(200, activation = 'relu')(layer1) # Changed from 3
-layer3 = Dense(100, activation = 'relu')(layer2) # Changed from 3
-layer4 = Dense(60, activation = 'relu')(layer3)
-layer5 = Dense(30, activation = 'relu')(layer4)
-z_mean = Dense(latent_space_dim)(layer5)
-z_log_sigma = Dense(latent_space_dim)(layer5)
-encoder = keras.Model(inputs, [z_mean, z_log_sigma], name="encoder")
-sampler_input1 = keras.Input(shape=(latent_space_dim,))
-sampler_input2 = keras.Input(shape=(latent_space_dim,))
-latent_sample = Lambda(sampling, output_shape = (latent_space_dim,))([sampler_input1, sampler_input2])
-sampler = keras.Model([sampler_input1, sampler_input2], latent_sample)
-latent_inputs = keras.Input(shape=(latent_space_dim,))
-layer6 = Dense(20, activation = 'relu')(latent_inputs)
-layer7 = Dense(30, activation = 'relu')(layer6)
-layer8 = Dense(50, activation = 'relu')(layer7)
-layer9 = Dense(100, activation = 'relu')(layer8)
-layer10 = Dense(200, activation = 'relu')(layer9)
-decoder_outputs = Dense(6, activation = 'sigmoid')(layer10)
-decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
+def get_sampler(latent_space_dim=2):
+    def sampling(args):
+        z_mean, z_log_sigma = args
+        epsilon = K.random_normal(shape=(latent_space_dim,), mean=0., stddev=1.)
+        return_value = z_mean + K.exp(z_log_sigma) * epsilon
+        return return_value
+    sampler_input1 = keras.Input(shape=(latent_space_dim,))
+    sampler_input2 = keras.Input(shape=(latent_space_dim,))
+    latent_sample = Lambda(sampling, output_shape = (latent_space_dim,))([sampler_input1, sampler_input2])
+    sampler = keras.Model([sampler_input1, sampler_input2], latent_sample)
+    return sampler
+
+def get_encoder(input_dim=6, latent_space_dim=2):
+    inputs = Input((input_dim,))
+    layer1 = Dense(input_dim, activation = 'relu')(inputs)
+    layer2 = Dense(200, activation = 'relu')(layer1) # Changed from 3
+    layer3 = Dense(100, activation = 'relu')(layer2) # Changed from 3
+    layer4 = Dense(60, activation = 'relu')(layer3)
+    layer5 = Dense(30, activation = 'relu')(layer4)
+    z_mean = Dense(latent_space_dim)(layer5)
+    z_log_sigma = Dense(latent_space_dim)(layer5)
+    encoder = keras.Model(inputs, [z_mean, z_log_sigma], name="encoder")
+    return encoder
+
+def get_decoder(latent_space_dim=2, output_dim=6):
+    latent_inputs = keras.Input(shape=(latent_space_dim,))
+    layer6 = Dense(20, activation = 'relu')(latent_inputs)
+    layer7 = Dense(30, activation = 'relu')(layer6)
+    layer8 = Dense(50, activation = 'relu')(layer7)
+    layer9 = Dense(100, activation = 'relu')(layer8)
+    layer10 = Dense(200, activation = 'relu')(layer9)
+    decoder_outputs = Dense(6, activation = 'sigmoid')(layer10)
+    decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
+    return decoder
 
 class VAE(Model):
     def __init__(self, encoder, sampler, decoder, beta = 1, **kwargs):
@@ -117,16 +123,26 @@ class VAE(Model):
         self.add_metric(reconstruction_loss, name='reconstruction_loss', aggregation='mean')
         return reconstruction
    
+input_dim = 6
+latent_space_dim = 2
+output_dim = 6
+
+encoder = get_encoder(input_dim=6, latent_space_dim=2)
+sampler = get_sampler(latent_space_dim=2)
+decoder = get_decoder(latent_space_dim=2, output_dim=6)
+
 vae = VAE(encoder, sampler, decoder, beta = 0.01)
 vae.compile(optimizer = 'adam')
 
-os.chdir("C:/Users/ernest.liu/Documents/git/Morphine-22-23/ML/Model/weights/") # Modify this
+os.chdir("./../Model/weights/")
 model_name = "vae_fixed_loss_beta_0_01"
 vae.load_weights(model_name)
 
 
 # Calling out predictions
 
+
+"""
 DATASETS_PATH = "C:/Users/ernest.liu/Documents/git/Morphine-22-23/ML/Datasets/19-01-2023/"
 os.chdir(DATASETS_PATH)
 os.listdir()
@@ -156,3 +172,4 @@ train_data_norm = np.delete(train_data_norm_presplit, valid_indices, axis = 0)
 train_predictions = vae.predict(train_data_norm)
 test_predictions = vae.predict(test_data_norm)
 valid_predictions = vae.predict(valid_data_norm)
+"""

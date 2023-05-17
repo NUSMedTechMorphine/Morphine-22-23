@@ -6,6 +6,11 @@ import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from vae import *
+import pickle
+import os
+
+os.chdir("C:/Users/ernest.liu/Documents/git/Morphine-22-23/ML/Docker/")
 
 # Connection to Firebase
 cred_obj = firebase_admin.credentials.Certificate("../Morphine2.json")
@@ -130,30 +135,63 @@ def read_data():
 def predict(wave_data, t1=8.6396, t2=0.5):
     """
     Actual:
-    This function make use of the autoencoder model to predict one wave of data - 20 datapoints.
+    This function make use of the variational autoencoder model to predict one wave of data - 20 datapoints.
     The model will predict whether each of this 20 datapoints is ADL or Fall from the reconstruction error threshold, t1.
-    If the number of datapoints in a wave is more than a certain threshold, t2, we will then classify it as Fall, else ADL.
-
+    If the percentage of datapoints identified as anomalous within a wave is more than a certain threshold, t2, we will then classify it as Fall, else ADL.
+    Note that 0 <= t2 <= 1 and t1 >= 0
     For now:
     t1 is threshold to classify one datapoint based on the y-axis of accelerometer 
     t2 is threshold to classify a wave - 0.5 i.e. if >= 50% of the datapoints are anomalous, this wave will be classified as fall
     """
-    pass
+    return "Fall detected" if np.sum(np.abs(wave_data.Ay) > t1) >= t2 * wave_data.shape[0] else "Normal"
+
+def predict_vae(wave_data, vae_model, scaler_model, t1=0.686759037392612, t2=0.5):
+    """
+    This function make use of the variational autoencoder model to predict one wave of data - 20 datapoints.
+    The model will predict whether each of this 20 datapoints is ADL or Fall from the reconstruction error threshold, t1.
+    If the percentage of datapoints identified as anomalous within a wave is more than a certain threshold, t2, we will then classify it as Fall, else ADL.
+    Note that 0 <= t1, t2 <= 1
+    """
+    wave_data = wave_data[["Ax", "Ay", "Az", "gx", "gy", "gz"]]
+    wave_data_norm = scaler_model.transform(wave_data)
+    wave_predictions = vae_model.predict(wave_data_norm)
+    wave_data_mae = np.sum(np.abs(wave_data_norm - wave_predictions), axis = 1)
+    return "Fall detected" if np.sum(wave_data_mae > t1) >= t2 * wave_data.shape[0] else "Normal"
+    
 
 def write_to_firebase(prediction, prediction_path=FIREBASE_PREDICTION_PATH):
     """ Write results to firebase """
     if prediction.lower() == "fall detected":
-        prediction_path.update({"0":"Fall Detected"})
+        prediction_path.update({"0":"Fall detected"})
     elif prediction.lower() == "normal":
         prediction_path.update({"0":"Normal"})
 
 if __name__ == "__main__":
+    # Instantiating VAE model
+    input_dim = 6
+    latent_space_dim = 2
+    output_dim = 6
+
+    encoder = get_encoder(input_dim=6, latent_space_dim=2)
+    sampler = get_sampler(latent_space_dim=2)
+    decoder = get_decoder(latent_space_dim=2, output_dim=6)
+
+    vae = VAE(encoder, sampler, decoder, beta = 0.01)
+    vae.compile(optimizer = 'adam')
+
+    os.chdir("./../Model/weights/")
+    model_name = "vae_fixed_loss_beta_0_01"
+    vae.load_weights(model_name)
+
+    # Instantiating MinMaxScaler
+    scaler = pickle.load(open('scaler.pkl', 'rb'))
+
     while True:
         gps_df, mpu6050_df = read_data()
         print("GPS and MPU6050 Dataframe Shape:", gps_df.shape, mpu6050_df.shape)
-        # prediction = predict(wave_data=mpu6050_df.values)
-        prediction = "Fall detected"
+        #prediction = predict(wave_data=mpu6050_df)
+        prediction = predict_vae(wave_data=mpu6050_df, vae_model=vae, scaler_model = scaler)
         print("Prediction:", prediction.title())
-        # write_to_firebase(prediction)
+        write_to_firebase(prediction)
         print("Updated Firebase!")
         print()
