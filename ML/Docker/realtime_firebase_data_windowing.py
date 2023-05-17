@@ -6,9 +6,12 @@ import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from vae import *
 import pickle
 import os
+import warnings
+warnings.filterwarnings('ignore')
+
+from vae import *
 
 # Connection to Firebase
 cred_obj = firebase_admin.credentials.Certificate("../Morphine2.json")

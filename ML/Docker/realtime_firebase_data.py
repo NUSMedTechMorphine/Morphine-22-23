@@ -6,11 +6,12 @@ import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from vae import *
 import pickle
 import os
+import warnings
+warnings.filterwarnings('ignore')
 
-os.chdir("C:/Users/ernest.liu/Documents/git/Morphine-22-23/ML/Docker/")
+from vae import *
 
 # Connection to Firebase
 cred_obj = firebase_admin.credentials.Certificate("../Morphine2.json")
@@ -188,8 +189,8 @@ if __name__ == "__main__":
     while True:
         gps_df, mpu6050_df = read_data()
         print("GPS and MPU6050 Dataframe Shape:", gps_df.shape, mpu6050_df.shape)
-        #prediction = predict(wave_data=mpu6050_df)
-        prediction = predict_vae(wave_data=mpu6050_df, vae_model=vae, scaler_model = scaler)
+        prediction = predict(wave_data=mpu6050_df)
+        # prediction = predict_vae(wave_data=mpu6050_df, vae_model=vae, scaler_model = scaler)
         print("Prediction:", prediction.title())
         write_to_firebase(prediction)
         print("Updated Firebase!")
