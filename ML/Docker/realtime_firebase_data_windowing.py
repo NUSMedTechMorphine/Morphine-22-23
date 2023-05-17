@@ -163,7 +163,7 @@ def predict(wave_data, t1=8.6396, t2=0.5):
     """
     return "Fall detected" if np.sum(np.abs(wave_data.Ay) > t1) >= t2 * wave_data.shape[0] else "Normal"
 
-def predict_vae(wave_data, prev_wave_data, vae_model, scaler_model, t1=10.32485739914194, t2=0.5):
+def predict_vae(wave_data, prev_wave_data, vae_model, scaler_model, t1=15.24268781764317, t2=0.9):
     """
     This function make use of the variational autoencoder model to predict one wave of data - 20 datapoints.
     The model will predict whether each of this 20 datapoints is ADL or Fall from the reconstruction error threshold, t1.
@@ -198,11 +198,11 @@ if __name__ == "__main__":
     vae = VAE(encoder, sampler, decoder, beta = 0.01)
     vae.compile(optimizer = 'adam')
 
-    model_name = "vae_windowing_loss_beta_0_01"
+    model_name = "new_vae_windowing_loss_beta_0_01"
     vae.load_weights("./../Model/weights/" + model_name)
 
     # Instantiating MinMaxScaler
-    scaler = pickle.load(open('./../Model/weights/scaler_windowing.pkl', 'rb'))
+    scaler = pickle.load(open('./../Model/weights/new_scaler_windowing.pkl', 'rb'))
 
     gps_df, mpu6050_df = read_data()
     prev_wave_data = mpu6050_df.copy()[["Ax", "Ay", "Az", "gx", "gy", "gz"]]
