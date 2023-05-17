@@ -1,11 +1,8 @@
 import firebase_admin
 from firebase_admin import db
-from datetime import datetime
-import time
 import json
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle
 import os
 import warnings
