@@ -112,9 +112,12 @@ def process_split_ciruit_data(split_circuit_data):
             #print('Extracted MPU6050 Data')
     return gps_df, mpu6050_df
 
-def process_file(filename):
-    """ Converts target file from pickle to csv """
-    filename = f"../Datasets/raw/fall/{filename}.pkl"
+def process_file(filename, dataset_cat):
+    """
+    Converts target file from pickle to csv
+    dataset_cat: adl or fall
+    """
+    filename = f"../Datasets/raw/{dataset_cat}/{filename}.pkl"
 
     full_gps_df = pd.DataFrame(columns = ['accounter', 'latitude', 'longitude', 'altitude', 'satelliteInView', 'timingForThisSet', 'LoopSpeed', 'UploadSpeed'])
     full_mpu6050_df = pd.DataFrame(columns = ['accounter', 'LoopSpeedArr', 'UploadSpeedArr', 'set_index', 'Ax', 'Ay', 'Az', 'gx', 'gy', 'gz', 'temp', 'timingForThisSet', 'timeDifference'])
@@ -131,16 +134,17 @@ def process_file(filename):
     
     return full_gps_df, full_mpu6050_df
 
-def save_processed_file(processed_df, filename_to_save, kind):
-    final_dir = f"../Datasets/curated/fall/{kind}_{filename_to_save}.csv"
+def save_processed_file(processed_df, filename_to_save, dataset_cat, kind):
+    final_dir = f"../Datasets/curated/{dataset_cat}/{kind}_{filename_to_save}.csv"
     processed_df.to_csv(final_dir, index=False)
     print("File saved at:", final_dir)
 
 if __name__ == "__main__":
     filename = sys.argv[1] # filename to process e.g. "data_2023-05-17_14-00-54"
-    gps_df, mpu6050_df = process_file(filename)
-    save_processed_file(gps_df, filename, "gps")
-    save_processed_file(mpu6050_df, filename, "mpu6050")
+    dataset_cat = sys.argv[2] 
+    gps_df, mpu6050_df = process_file(filename, dataset_cat)
+    save_processed_file(gps_df, filename, dataset_cat, "gps")
+    save_processed_file(mpu6050_df, filename, dataset_cat, "mpu6050")
     print("Files saved successfully!")
 
 
