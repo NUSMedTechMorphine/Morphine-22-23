@@ -10,8 +10,6 @@ from vae import *
 import pickle
 import os
 
-os.chdir("C:/Users/ernest.liu/Documents/git/Morphine-22-23/ML/Docker/")
-
 # Connection to Firebase
 cred_obj = firebase_admin.credentials.Certificate("../Morphine2.json")
 default_app = firebase_admin.initialize_app(cred_obj, {
@@ -132,6 +130,26 @@ def read_data():
     gps_df, mpu6050_df = process_split_ciruit_data(split_circuit_data)
     return gps_df, mpu6050_df
 
+def pivot_df(df, num_new_cols = 20):
+    df = df.copy()
+    for num_new_rows in range(1, num_new_cols + 1):
+        new_rows = pd.DataFrame([[0,0,0,0,0,0] for i in range(num_new_rows)], columns = ['Ax','Ay','Az','gx','gy','gz'])
+        temp_df = pd.concat([
+            new_rows, df[['Ax','Ay','Az','gx','gy','gz']]
+        ], axis=0).\
+        reset_index(drop=True).\
+        rename(columns={
+            'Ax' : f'Ax{num_new_rows}',
+            'Ay' : f'Ay{num_new_rows}',
+            'Az' : f'Az{num_new_rows}',
+            'gx' : f'gx{num_new_rows}',
+            'gy' : f'gy{num_new_rows}',
+            'gz' : f'gz{num_new_rows}'
+        })
+        df = pd.concat([df, temp_df], axis = 1)
+    df = df.dropna().iloc[20:,:].reset_index(drop=True)
+    return df
+
 def predict(wave_data, t1=8.6396, t2=0.5):
     """
     Actual:
@@ -145,14 +163,15 @@ def predict(wave_data, t1=8.6396, t2=0.5):
     """
     return "Fall detected" if np.sum(np.abs(wave_data.Ay) > t1) >= t2 * wave_data.shape[0] else "Normal"
 
-def predict_vae(wave_data, vae_model, scaler_model, t1=0.686759037392612, t2=0.5):
+def predict_vae(wave_data, prev_wave_data, vae_model, scaler_model, t1=10.32485739914194, t2=0.5):
     """
     This function make use of the variational autoencoder model to predict one wave of data - 20 datapoints.
     The model will predict whether each of this 20 datapoints is ADL or Fall from the reconstruction error threshold, t1.
     If the percentage of datapoints identified as anomalous within a wave is more than a certain threshold, t2, we will then classify it as Fall, else ADL.
-    Note that 0 <= t1, t2 <= 1
+    Note that 0 <= t2 <= 1 and t1 >= 0
     """
     wave_data = wave_data[["Ax", "Ay", "Az", "gx", "gy", "gz"]]
+    wave_data = pivot_df(pd.concat([prev_wave_data, wave_data], axis = 0).reset_index(drop=True))
     wave_data_norm = scaler_model.transform(wave_data)
     wave_predictions = vae_model.predict(wave_data_norm)
     wave_data_mae = np.sum(np.abs(wave_data_norm - wave_predictions), axis = 1)
@@ -168,29 +187,32 @@ def write_to_firebase(prediction, prediction_path=FIREBASE_PREDICTION_PATH):
 
 if __name__ == "__main__":
     # Instantiating VAE model
-    input_dim = 6
-    latent_space_dim = 2
-    output_dim = 6
+    input_dim = 126
+    latent_space_dim = 8
+    output_dim = 126
 
-    encoder = get_encoder(input_dim=6, latent_space_dim=2)
-    sampler = get_sampler(latent_space_dim=2)
-    decoder = get_decoder(latent_space_dim=2, output_dim=6)
+    encoder = get_encoder(input_dim=input_dim, latent_space_dim=latent_space_dim)
+    sampler = get_sampler(latent_space_dim=latent_space_dim)
+    decoder = get_decoder(latent_space_dim=latent_space_dim, output_dim=output_dim)
 
     vae = VAE(encoder, sampler, decoder, beta = 0.01)
     vae.compile(optimizer = 'adam')
 
-    model_name = "vae_fixed_loss_beta_0_01"
+    model_name = "vae_windowing_loss_beta_0_01"
     vae.load_weights("./../Model/weights/" + model_name)
 
     # Instantiating MinMaxScaler
-    scaler = pickle.load(open('./../Model/weights/scaler.pkl', 'rb'))
+    scaler = pickle.load(open('./../Model/weights/scaler_windowing.pkl', 'rb'))
+
+    gps_df, mpu6050_df = read_data()
+    prev_wave_data = mpu6050_df.copy()[["Ax", "Ay", "Az", "gx", "gy", "gz"]]
 
     while True:
         gps_df, mpu6050_df = read_data()
         print("GPS and MPU6050 Dataframe Shape:", gps_df.shape, mpu6050_df.shape)
-        #prediction = predict(wave_data=mpu6050_df)
-        prediction = predict_vae(wave_data=mpu6050_df, vae_model=vae, scaler_model = scaler)
+        prediction = predict_vae(wave_data=mpu6050_df, prev_wave_data = prev_wave_data, vae_model=vae, scaler_model = scaler)
         print("Prediction:", prediction.title())
+        prev_wave_data = mpu6050_df.copy()[["Ax", "Ay", "Az", "gx", "gy", "gz"]]
         write_to_firebase(prediction)
         print("Updated Firebase!")
         print()
