@@ -178,10 +178,10 @@ if __name__ == "__main__":
     vae.compile(optimizer = 'adam')
 
     model_name = "vae_fixed_loss_beta_0_01"
-    vae.load_weights("./../Model/weights/" + model_name)
+    vae.load_weights("./weights/" + model_name)
 
     # Instantiating MinMaxScaler
-    scaler = pickle.load(open('./../Model/weights/scaler.pkl', 'rb'))
+    scaler = pickle.load(open('./weights/scaler.pkl', 'rb'))
 
     # Accouter variable
     curr_accounter = None

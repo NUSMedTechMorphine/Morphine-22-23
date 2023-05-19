@@ -199,10 +199,10 @@ if __name__ == "__main__":
     vae.compile(optimizer = 'adam')
 
     model_name = "new_vae_windowing_loss_beta_0_01"
-    vae.load_weights("./../Model/weights/" + model_name)
+    vae.load_weights("./weights/" + model_name)
 
     # Instantiating MinMaxScaler
-    scaler = pickle.load(open('./../Model/weights/new_scaler_windowing.pkl', 'rb'))
+    scaler = pickle.load(open('./weights/new_scaler_windowing.pkl', 'rb'))
 
     gps_df, mpu6050_df = read_data()
     prev_wave_data = mpu6050_df.copy()[["Ax", "Ay", "Az", "gx", "gy", "gz"]]
