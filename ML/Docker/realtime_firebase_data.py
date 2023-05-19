@@ -183,12 +183,21 @@ if __name__ == "__main__":
     # Instantiating MinMaxScaler
     scaler = pickle.load(open('./../Model/weights/scaler.pkl', 'rb'))
 
+    # Accouter variable
+    curr_accounter = None
+
     while True:
         gps_df, mpu6050_df = read_data()
-        print("GPS and MPU6050 Dataframe Shape:", gps_df.shape, mpu6050_df.shape)
-        prediction = predict(wave_data=mpu6050_df)
-        # prediction = predict_vae(wave_data=mpu6050_df, vae_model=vae, scaler_model = scaler)
-        print("Prediction:", prediction.title())
-        write_to_firebase(prediction)
-        print("Updated Firebase!")
+        accounter = mpu6050_df.accounter[0]
+        print("Current Accounter:", accounter)
+        if accounter != curr_accounter:
+            print("GPS and MPU6050 Dataframe Shape:", gps_df.shape, mpu6050_df.shape)
+            prediction = predict(wave_data=mpu6050_df)
+            # prediction = predict_vae(wave_data=mpu6050_df, vae_model=vae, scaler_model = scaler)
+            print("Prediction:", prediction.title())
+            write_to_firebase(prediction)
+            print("Updated Firebase!")
+            curr_accounter = accounter
+        else:
+            print("Same accounter, no prediction made")
         print()
