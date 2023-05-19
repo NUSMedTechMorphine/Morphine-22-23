@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 from vae import *
 
 # Connection to Firebase
-cred_obj = firebase_admin.credentials.Certificate("../Morphine2.json")
+cred_obj = firebase_admin.credentials.Certificate("Morphine2.json")
 default_app = firebase_admin.initialize_app(cred_obj, {
   'databaseURL':'https://morphine-64cdd-default-rtdb.asia-southeast1.firebasedatabase.app/'
   })
