@@ -48,6 +48,7 @@ const char* password =  "12345678";
 
 
 //--------------------Define variables--------------------
+#define button_pin 15
 unsigned long sendDataPrevMillis = 0;
 int count = 0;
 bool signupOK = false;
@@ -59,6 +60,7 @@ float UploadSpeed = 0;
 float LoopSpeed = 0;
 const uint32_t connectTimeoutMs = 10000; // WiFi connect timeout per AP. Increase when connecting takes longer.
 String StringValue = "";
+String panic_state = "";
 
 //--------------------Initialising Components--------------------
 Adafruit_MPU6050 mpu; 
@@ -70,6 +72,8 @@ Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
  
 void setup() {
   Serial.begin(115200);
+//--------------------Panic Button-------------------- 
+  pinMode(button_pin, INPUT_PULLUP);
 
 //--------------------Wifi Connection-------------------- 
   WiFi.mode(WIFI_STA);
@@ -190,6 +194,7 @@ void loop() {
   String UploadSpeedPath = path + "/MPU6050 UploadSpeedArr";
   String LoopSpeedPath = path + "/MPU6050 LoopSpeedArr";
   String Fall_indicator_path = path + "/MPU6050 Fall";
+  String Panic_path = path + "/Panic Button";
 
   //if the connection to the stongest hotstop is lost, it will connect to the next network on the list
   if (wifiMulti.run() != WL_CONNECTED) {
@@ -209,7 +214,17 @@ void loop() {
     String datapoints = "";
     FirebaseJsonArray DatapointsArr;
     FirebaseJsonArray IndicatorArr;
+    FirebaseJsonArray PanicArr;
     IndicatorArr.add("  ");
+
+    //--------------------Panic state--------------------
+    if (digitalRead(button_pin) == 1){
+      panic_state = "False";
+    } else {
+      panic_state = "True";
+    }
+    PanicArr.add(panic_state);
+
     
     while (i<max_samples)
     {
@@ -259,6 +274,7 @@ void loop() {
     Serial.printf("Uploading Accounter Value... %s\n", Firebase.RTDB.setInt(&fbdo, user_path_accounter, count) ? "ok" : fbdo.errorReason().c_str());
     Serial.printf("Uploading Data Array ... %s\n", Firebase.RTDB.setArray(&fbdo, user_path_datapoints, &DatapointsArr) ? "ok" : fbdo.errorReason().c_str());
     Serial.printf("Set Fall indication... %s\n", Firebase.RTDB.setArray(&fbdo, Fall_indicator_path, &IndicatorArr) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set Panic indication... %s\n", Firebase.RTDB.setArray(&fbdo, Panic_path, &PanicArr) ? "ok" : fbdo.errorReason().c_str());
 
     EndUpload = millis();
     
